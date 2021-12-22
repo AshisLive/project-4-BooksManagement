@@ -32,6 +32,9 @@ const mongoose = require('mongoose');
             type: Number,
             default: 0
         },
+       "coverphoto": {
+        type: String
+        },
         "deletedAt": {
             type: Date,
             default: null

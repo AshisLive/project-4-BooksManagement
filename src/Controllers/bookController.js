@@ -4,6 +4,39 @@ const reviewModel = require('../models/reviewModel')
 const validateDate = require("validate-date");
 const mongoose = require('mongoose');
 
+const aws = require("aws-sdk");
+
+aws.config.update({
+    accessKeyId: "AKIAY3L35MCRRMC6253G",  // id
+    secretAccessKey: "88NOFLHQrap/1G2LqUy9YkFbFRe/GNERsCyKvTZA",  // like your secret password
+    region: "ap-south-1" // Mumbai region
+});
+// this function uploads file to AWS and gives back the url for the file
+let uploadFile = async (file) => {
+    return new Promise(function (resolve, reject) { // exactly 
+
+        // Create S3 service object
+        let s3 = new aws.S3({ apiVersion: "2006-03-01" });
+        var uploadParams = {
+            ACL: "public-read", // this file is publically readable
+            Bucket: "classroom-training-bucket", // HERE
+            Key: "pk_newFolder/" + file.originalname, // HERE    "pk_newFolder/harry-potter.png" pk_newFolder/harry-potter.png
+            Body: file.buffer,
+        };
+
+        // Callback - function provided as the second parameter ( most oftenly)
+        s3.upload(uploadParams, function (err, data) {
+            if (err) {
+                return reject({ "error": err });
+            }
+            console.log(data)
+            console.log(`File uploaded successfully. ${data.Location}`);
+            return resolve(data.Location); //HERE 
+        });
+    });
+};
+
+
 const isValid = function (value) {
     if (typeof (value) === 'undefined' || typeof (value) === 'null') { return false } //if undefined or null occur rather than what we are expecting than this particular feild will be false.
     if (value.trim().length == 0) { return false } //if user give spaces not any string eg:- "  " =>here this value is empty, only space is there so after trim if it becomes empty than false will be given. 
@@ -16,6 +49,19 @@ const isValidRequestBody = function (requestBody) {
 
 const createBook = async function (req, res) {
     try {
+
+        let files = req.files;
+        if (files && files.length > 0) {
+          //upload to s3 and return true..incase of error in uploading this will goto catch block( as rejected promise)
+          var uploadedFileURL = await uploadFile( files[0] ); // expect this function to take file as input and give url of uploaded file as output 
+          //res.status(201).send({ status: true, data: uploadedFileURL });
+    
+        } 
+        else {
+          res.status(400).send({ status: false, msg: "No file to write" });
+        }
+
+
         if (!isValidRequestBody(req.body)) {
             res.status(400).send({ status: false, message: 'Invalid request parameters. Please provide book details' })
             return
@@ -68,7 +114,7 @@ const createBook = async function (req, res) {
         if (release[0].length == 4 && release[1].length == 2 && release[2].length == 2) {
             if ((validateDate(releasedAt, responseType = "boolean") == true)) {
                 const bookdetail = {
-                    title: title.trim(), excerpt: excerpt.trim(), userId: userId.trim(), ISBN: ISBN.trim(), category: category.trim(), subcategory: subcategory.trim(), releasedAt: releasedAt.trim()
+                    title: title.trim(), excerpt: excerpt.trim(), userId: userId.trim(), ISBN: ISBN.trim(), category: category.trim(), subcategory: subcategory.trim(), releasedAt: releasedAt.trim(), coverphoto: uploadedFileURL 
                 }
                 let savedbook = await bookModel.create(bookdetail);
                 return res.status(201).send({ status: true, message: 'Success', data: savedbook });
@@ -108,7 +154,7 @@ const getAllBooks = async function (req, res) {
 
         let books = await bookModel.find(query)
         if (Array.isArray(books) && books.length === 0) {   //this sitution is for when the user gives details but details does not matches with any of the blogs.
-            return res.status(404).send({ status: false, message: 'No blogs found' })
+            return res.status(404).send({ status: false, message: 'No books found' })
         }
 
         query.isDeleted = false      //for finding only those blogs which are not deleted and they are publish.
@@ -145,6 +191,7 @@ const getBook = async function (req, res) {
             "reviews": checkbookId.reviews,
             "deletedAt": checkbookId.deletedAt, // if deleted is true deletedAt will have a date 2021-09-17T04:25:07.803Z,
             "releasedAt": checkbookId.releasedAt,
+            "coverphoto":checkbookId.coverphoto,
             "createdAt": checkbookId.createdAt,
             "updatedAt": checkbookId.updatedAt,
             "reviwersData": reviewsData
@@ -168,7 +215,7 @@ const updateBook = async function (req, res) {
             res.status(400).send({ status: false, message: `${req.userId} is not a valid token id` })
             return
         }
-        const book = await bookModel.findOne({ _id: req.params.bookId, isDeleted: false})
+        const book = await bookModel.findOne({ _id: req.params.bookId, isDeleted: false })
         if (!book) {
             res.status(404).send({ status: false, message: `Book not found` })
             return
@@ -228,7 +275,7 @@ const deleteBookByID = async function (req, res) {
             return
         }
 
-        const Book = await bookModel.findOne({ _id: bookId, isDeleted: false})
+        const Book = await bookModel.findOne({ _id: bookId, isDeleted: false })
 
         if (!Book) {
             res.status(404).send({ status: false, message: `Book not found` })

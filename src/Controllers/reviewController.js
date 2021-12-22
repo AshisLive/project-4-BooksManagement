@@ -57,6 +57,7 @@ const createReview = async function (req, res) {
                 "reviews": updatedBook.reviews,
                 "deletedAt": updatedBook.deletedAt, // if deleted is true deletedAt will have a date 2021-09-17T04:25:07.803Z,
                 "releasedAt": updatedBook.releasedAt,
+                "coverphoto":updatedBook.coverphoto,
                 "createdAt": updatedBook.createdAt,
                 "updatedAt": updatedBook.updatedAt,
                 "reviwersData": getAllReviews
@@ -131,6 +132,7 @@ const updateReview = async function (req, res) {
             "reviews": checkbookId.reviews,
             "deletedAt": checkbookId.deletedAt, // if deleted is true deletedAt will have a date 2021-09-17T04:25:07.803Z,
             "releasedAt": checkbookId.releasedAt,
+            "coverphoto":checkbookId.coverphoto,
             "createdAt": checkbookId.createdAt,
             "updatedAt": checkbookId.updatedAt,
             "reviwersData": reviewDetails
