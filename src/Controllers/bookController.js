@@ -55,7 +55,6 @@ const createBook = async function (req, res) {
           //upload to s3 and return true..incase of error in uploading this will goto catch block( as rejected promise)
           var uploadedFileURL = await uploadFile( files[0] ); // expect this function to take file as input and give url of uploaded file as output 
           //res.status(201).send({ status: true, data: uploadedFileURL });
-    
         } 
         else {
           res.status(400).send({ status: false, msg: "No file to write" });
@@ -179,7 +178,6 @@ const getBook = async function (req, res) {
         }
 
         const reviewsData = await reviewModel.find({ bookId: bookId, isDeleted: false })
-
         const bookWithReviews = {
             "_id": checkbookId._id,
             "title": checkbookId.title,

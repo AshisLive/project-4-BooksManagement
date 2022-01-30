@@ -61,7 +61,7 @@ const activityToken = function (req, res, next) {
         if (!validtoken) { //after decode some other value is their than it will say invalid
             return res.status(403).send({ status: false, msg: "The token is invalid" })
         }
-        console.log(validtoken)
+       // console.log(validtoken)
         if (Date.now() >= validtoken.exp * 1000) {
             return res.status(403).send({status:false, message:"token expired"});
           }
